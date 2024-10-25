@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mongodb-backup-prod
+  namespace : mongodb-backup
+spec:
+  schedule: "00 12 * * *"
+  timeZone: "Etc/UTC"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: mongodb-backup-prod
+            image: mongo:6.0.17-jammy
+            args:
+            - "/bin/sh"
+            - "-c"
+            - mongodump --host=<IP-ADDRESS> --port=<PORT> --username=<USER> --password=<PASSWORD> --db=<DATABASE> --archive=<BACKUP-FILE-NAME-WITH-PATH>.archive
+            volumeMounts:
+            - name: mongodb-persistent-storage
+              mountPath: /data/backups/mongodb
+          restartPolicy: OnFailure
+          volumes:
+          - name: mongodb-persistent-storage
+            persistentVolumeClaim:
+              claimName: mongodb-persistent-volume
